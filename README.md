@@ -5,9 +5,10 @@ Katrín Blöndal, Khachik Sargsyan, David H. Bross, Branko Ruscic, and C. Frankl
 ./build.sh
 
 # Load data
-# <caseid> = 1 for H PBE-D3(ABC), 2 for H BEEF_vdW, 3 for CO, 4 for CH3OH, 5 for CH3OH_2d
-prep/prep_xytrain.x <caseid>
-prep/mpnn_load.py <caseid>
+	prep/prep_xytrain.x <caseid>
+	prep/mpnn_load.py <caseid>
+where <caseid> = 1 for H PBE-D3(ABC), 2 for H BEEF_vdW, 3 for CO, 4 for CH3OH, 5 for CH3OH_2d
+
 
 # Exploratory data analysis
 prep/plot_yx.py 
