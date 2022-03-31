@@ -16,6 +16,7 @@ myrc()
 
 
 ####################################################################################
+int_method = 'GMMT'
 ads = 'CO' # This is only implemented for CO
 ####################################################################################
 
@@ -39,7 +40,10 @@ else:
 
 TT=float(sys.argv[1])
 nmc = int(sys.argv[2])
-
+if len(sys.argv)>3:
+    seed = int(sys.argv[3])
+else:
+    seed = None
 
 
 def mpnneval_wrapper(x, mpnn=None,  temp=None):
@@ -49,6 +53,7 @@ def mpnneval_wrapper(x, mpnn=None,  temp=None):
     return y
 
 
+# Integrate the MPNN wrapper function
 func = mpnneval_wrapper
 func_args = {'mpnn': mpnn, 'temp': TT}
 
@@ -56,8 +61,6 @@ func_args = {'mpnn': mpnn, 'temp': TT}
 volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform)/r**2
 mpts_ = mpnn.rhombi[mpnn.eval_type].mpts_toCube(mpnn.mpts, xyfold=True)
 
-# Integrate the MPNN wrapper function
-intg = IntegratorGMMT()
 domain = np.tile(np.array([0.0,1.0]), (dim,1))
 
 if ads == 'CO':
@@ -67,23 +70,30 @@ else:
     print(f"Domain setup routine not ready for adsorbate {ads}. Exiting.")
     sys.exit()
 
-integral, results = intg.integrate(func, domain,
-                                  func_args=func_args,
-                                  means=[mpt.center for mpt in mpts_],
-                                  covs=[np.linalg.inv(mpt.hess)*(kB*TT) for mpt in mpts_],
-                                  nmc=nmc)
+## Truncated Gaussian Mixture Model Importance Sampling
+if int_method == 'GMMT':
+    intg = IntegratorGMMT()
+    integral, results = intg.integrate(func, domain,
+                                      func_args=func_args,
+                                      means=[mpt.center for mpt in mpts_],
+                                      covs=[np.linalg.inv(mpt.hess)*(kB*TT) for mpt in mpts_],
+                                      nmc=nmc)
+## Monte-Carlo integration, not accurate for low T
+elif int_method == 'MC':
+intg = IntegratorMC(seed=seed)
+integral, results = intg.integrate(func,
+                                 domain=domain,
+                                 nmc=nmc, func_args=func_args)
+else:
+    print(f"Integration method {int_method} is unknown. Exiting.")
+    sys.exit()
 
-# Scipy integrator, goes on forever
+
+## Scipy integrator, goes on forever
 # intg = IntegratorScipy()
 # integral, results = intg.integrate(func, domain, func_args=func_args, epsrel=1.e-5)
 
-# Monte-Carlo integration, not accurate
-# intg = IntegratorMC()
-# integral, results = intg.integrate(func,
-#                                  domain=domain,
-#                                  nmc=nmc, func_args=func_args)
-
-# MCMC integration, not accurate
+## MCMC integration, not accurate
 # domain = np.tile(np.array([-np.inf,np.inf]), (dim,1))
 # intg = IntegratorMCMC()
 # integral, results = intg.integrate(func,
@@ -91,7 +101,14 @@ integral, results = intg.integrate(func, domain,
 #                                   domain=domain,
 #                                   nmc=nmc)
 
-print(integral)
+
+# Write out the samples for sanity check
+if 'xdata' in results.keys():
+    xr = results['xdata'].copy()
+    xr[:,:3] = mpnn.rhombi[mpnn.eval_type].fromCube(results['xdata'][:, :3])
+    np.savetxt('xdata_int.txt', xr)
+if 'ydata' in results.keys():
+    np.savetxt('ydata_int.txt', results['ydata'])
 
 
 tf = trans_kinetic_factor(TT, um)

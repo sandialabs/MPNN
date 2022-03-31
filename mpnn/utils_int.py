@@ -84,7 +84,7 @@ class IntegratorScipy(Integrator):
         return integral, results
 
 
-class IntegratorMCMC(object):
+class IntegratorMCMC(Integrator):
     """docstring for IntegratorMCMC"""
 
     def __init__(self):
@@ -111,11 +111,12 @@ class IntegratorMCMC(object):
         return integral, results
 
 
-class IntegratorMC(object):
+class IntegratorMC(Integrator):
     """docstring for IntegratorMC"""
 
-    def __init__(self):
+    def __init__(self, seed=None):
         super(IntegratorMC, self).__init__()
+        np.random.seed(seed=seed)
         return
 
     def integrate(self, function, domain=None, nmc=100, func_args=None):
@@ -131,11 +132,12 @@ class IntegratorMC(object):
         return integral, results
 
 
-class IntegratorWMC(object):
+class IntegratorWMC(Integrator):
     """docstring for IntegratorWMC"""
 
-    def __init__(self):
+    def __init__(self, seed=None):
         super(IntegratorWMC, self).__init__()
+        np.random.seed(seed=seed)
         return
 
     def integrate(self, function, mean=None, cov=None,
@@ -160,7 +162,7 @@ class IntegratorWMC(object):
         return integral, results
 
 
-class IntegratorGMM(object):
+class IntegratorGMM(Integrator):
     """docstring for IntegratorGMM"""
 
     def __init__(self):
@@ -189,7 +191,7 @@ class IntegratorGMM(object):
         return integral, results
 
 
-class IntegratorGMMT(object):
+class IntegratorGMMT(Integrator):
     """docstring for IntegratorGMMT"""
 
     def __init__(self):

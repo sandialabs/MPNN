@@ -2,7 +2,7 @@ MPNN is a small library for Minima-preserving neural network construction. See
 Katrín Blöndal, Khachik Sargsyan, David H. Bross, Branko Ruscic, and C. Franklin Goldsmith, "Adsorbate Partition Functions via Phase Space Integration: Quantifying the Effect of Translational Anharmonicity on Thermodynamic Properties", The Journal of Physical Chemistry C 2021 125 (37), 20249-20260. DOI: 10.1021/acs.jpcc.1c04009.
 
 # Build the library
-./build.sh
+	./build.sh
 
 # Load data
 	prep/prep_xytrain.x <caseid>
@@ -26,4 +26,4 @@ Katrín Blöndal, Khachik Sargsyan, David H. Bross, Branko Ruscic, and C. Frankl
 	postp/plot_2dslice_xtrain.py
 	postp/plot_2dslice_grid.py
 	postp/mpnn_eval.py
-	postp/mpnn_integrate.py <T> <N> # only for CO for now
+	postp/mpnn_integrate.py <T> <N> <seed> # only for CO for now, seed is optional
