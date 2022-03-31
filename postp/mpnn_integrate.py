@@ -80,10 +80,10 @@ if int_method == 'GMMT':
                                       nmc=nmc)
 ## Monte-Carlo integration, not accurate for low T
 elif int_method == 'MC':
-intg = IntegratorMC(seed=seed)
-integral, results = intg.integrate(func,
-                                 domain=domain,
-                                 nmc=nmc, func_args=func_args)
+    intg = IntegratorMC(seed=seed)
+    integral, results = intg.integrate(func,
+                                     domain=domain,
+                                     nmc=nmc, func_args=func_args)
 else:
     print(f"Integration method {int_method} is unknown. Exiting.")
     sys.exit()
