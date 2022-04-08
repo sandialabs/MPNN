@@ -27,8 +27,8 @@ def rot_kinetic_factor(TT, um, momIn, ads=None):
     m = um * a_to_m
 
     if ads=='CO':
-        return 2.0 * np.pi * np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) *\
-           2.0 * np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) / (h**2)
+        return np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) *\
+               np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) / (h**2)
     else:
         print(f"Need to implement rotational kinetic factor for {ads}. Exiting.")
         sys.exit()
