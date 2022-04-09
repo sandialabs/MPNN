@@ -58,7 +58,8 @@ func = mpnneval_wrapper
 func_args = {'mpnn': mpnn, 'temp': TT}
 
 
-volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform)/r**2
+volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform) #/r**2
+volume_factor *= 2./np.pi # this ensures that angular integral is 4.*pi instead of 2*pi^2
 mpts_ = mpnn.rhombi[mpnn.eval_type].mpts_toCube(mpnn.mpts, xyfold=True)
 
 domain = np.tile(np.array([0.0,1.0]), (dim,1))
@@ -113,5 +114,7 @@ if 'ydata' in results.keys():
 
 tf = trans_kinetic_factor(TT, um)
 rf = rot_kinetic_factor(TT, um, momIn, ads='CO')
+
+print(tf, rf, tf*rf, volume_factor, volume_factor*integral, integral)
 partition_function = tf*rf*volume_factor*integral
 print(TT, nmc,  partition_function)

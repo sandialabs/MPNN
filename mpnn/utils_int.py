@@ -196,6 +196,7 @@ class IntegratorGMMT(Integrator):
 
     def __init__(self):
         super(IntegratorGMMT, self).__init__()
+
         return
 
     def integrate(self, function, domain,
@@ -214,7 +215,6 @@ class IntegratorGMMT(Integrator):
 
         gmm_pdf = mygmm.pdf(xdata)
         volume = mygmm.volume_indomain(domain)
-
         integral = volume * np.mean(ydata / gmm_pdf)
 
         results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf/volume}
