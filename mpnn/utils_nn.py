@@ -318,6 +318,8 @@ class MLP(MLPBase):
             activ_fcn = torch.nn.Tanh()
         elif activ == 'relu':
             activ_fcn = torch.nn.ReLU()
+        elif activ == 'sigm':
+            activ_fcn = torch.nn.Sigmoid()
         else:
             activ_fcn = torch.nn.Identity()
 
@@ -419,7 +421,9 @@ class PeriodicLoss(torch.nn.Module):
     def forward(self, inputs, targets):
         tmp = (inputs-targets)**2
         fit = torch.mean(tmp)
-        penalty = self.lam * torch.mean((self.model(self.bdry1)-self.model(self.bdry2))**2)
+        penalty = 0.0
+        if self.lam>0:
+            penalty = self.lam * torch.mean((self.model(self.bdry1)-self.model(self.bdry2))**2)
         loss =  fit + penalty
         #print(fit, penalty)
 

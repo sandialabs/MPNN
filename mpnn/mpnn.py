@@ -221,7 +221,7 @@ class MPNN():
         self.mmodel = mmodel
 
         yy = mmodel(xx)
-
+        # print(np.min(yy))
         if temp is not None:
             yy = np.exp(-yy / (kB * temp))
 

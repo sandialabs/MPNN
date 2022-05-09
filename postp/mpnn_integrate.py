@@ -48,7 +48,12 @@ else:
 
 def mpnneval_wrapper(x, mpnn=None,  temp=None):
     xr = x.copy()
+    r=0.680986
     xr[:,:3] = mpnn.rhombi[mpnn.eval_type].fromCube(x[:, :3])
+    xr[:, 4] = np.arccos(xr[:, 4])-np.pi/2.
+    #xr[xr[:, 4]>np.pi/2., 4] -= np.pi
+    xr[:, 4] *= r
+    xr[:, 3] *= r
     y = mpnn.eval(xr, temp=temp)
     return y
 
@@ -58,26 +63,33 @@ func = mpnneval_wrapper
 func_args = {'mpnn': mpnn, 'temp': TT}
 
 
-volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform) #/r**2
-volume_factor *= 2./np.pi # this ensures that angular integral is 4.*pi instead of 2*pi^2
+volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform)/r**2
 mpts_ = mpnn.rhombi[mpnn.eval_type].mpts_toCube(mpnn.mpts, xyfold=True)
 
 domain = np.tile(np.array([0.0,1.0]), (dim,1))
 
 if ads == 'CO':
-    domain[3, :] = -np.pi*r, np.pi*r # for CO only!
-    domain[4, :] = -np.pi*r/2., np.pi*r/2. # for CO only!
+    domain[3, :] = -np.pi, np.pi # for CO only!
+    domain[4, :] = -1.0, 1.0 # -np.pi*r/2., np.pi*r/2. # for CO only!
 else:
     print(f"Domain setup routine not ready for adsorbate {ads}. Exiting.")
     sys.exit()
 
 ## Truncated Gaussian Mixture Model Importance Sampling
 if int_method == 'GMMT':
+
+    # cosine transformation adjustment. Assumes the last parameter is theta, and minima are all at theta=0
+    def coshess(hess):
+        new_hess = hess.copy()
+        new_hess[:,-1] *= -1
+        new_hess[-1,:] *= -1
+        return new_hess
+
     intg = IntegratorGMMT()
     integral, results = intg.integrate(func, domain,
                                       func_args=func_args,
                                       means=[mpt.center for mpt in mpts_],
-                                      covs=[np.linalg.inv(mpt.hess)*(kB*TT) for mpt in mpts_],
+                                      covs=[2.*np.linalg.inv(coshess(mpt.hess))*(kB*TT) for mpt in mpts_],
                                       nmc=nmc)
 ## Monte-Carlo integration, not accurate for low T
 elif int_method == 'MC':
@@ -115,6 +127,5 @@ if 'ydata' in results.keys():
 tf = trans_kinetic_factor(TT, um)
 rf = rot_kinetic_factor(TT, um, momIn, ads='CO')
 
-print(tf, rf, tf*rf, volume_factor, volume_factor*integral, integral)
 partition_function = tf*rf*volume_factor*integral
 print(TT, nmc,  partition_function)
