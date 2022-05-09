@@ -63,7 +63,7 @@ func = mpnneval_wrapper
 func_args = {'mpnn': mpnn, 'temp': TT}
 
 
-volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform)/r**2
+volume_factor = np.linalg.det(mpnn.rhombi[mpnn.eval_type].transform) #/r**2
 mpts_ = mpnn.rhombi[mpnn.eval_type].mpts_toCube(mpnn.mpts, xyfold=True)
 
 domain = np.tile(np.array([0.0,1.0]), (dim,1))
@@ -89,7 +89,7 @@ if int_method == 'GMMT':
     integral, results = intg.integrate(func, domain,
                                       func_args=func_args,
                                       means=[mpt.center for mpt in mpts_],
-                                      covs=[2.*np.linalg.inv(coshess(mpt.hess))*(kB*TT) for mpt in mpts_],
+                                      covs=[4.*np.linalg.inv(coshess(mpt.hess))*(kB*TT) for mpt in mpts_],
                                       nmc=nmc)
 ## Monte-Carlo integration, not accurate for low T
 elif int_method == 'MC':
