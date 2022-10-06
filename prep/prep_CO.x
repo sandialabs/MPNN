@@ -104,4 +104,4 @@ awk '{for(i=7;i<=NF;++i)printf("%s ", $i); print("")}' xyl_ > ltrain.txt
 # awk '{print $6}' xy_ > ytst.txt
 
 
-rm xyl xyl_
+#rm xyl xyl_

@@ -64,7 +64,7 @@ class GMM(MRV):
             self.covs = [np.eye(mean.shape[0]) for mean in self.means]
         else:
             self.covs=covs
-        if weights is None:
+        if weights is None or np.sum(weights)==0.0:
             self.weights = np.ones((ncl,))/ncl
         else:
             self.weights = weights / np.sum(weights)
