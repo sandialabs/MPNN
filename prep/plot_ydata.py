@@ -26,6 +26,10 @@ styles = ['mo', \
           'go', 'gd', 'gx', 'gs', 'gs', \
           'bo', 'bd', 'bx', 'bs', 'bs' \
           ] # this is optimized for the CO-on-Pt(111) case
+styles = ['ro', 'rd', 'rs', \
+          'bo', 'bd', 'bs', \
+          'mx', 'gx'
+          ] # this is optimized for the CH3-on-Ni(111) case
 
 for i in range(n_groups)[::-1]:
     yy = ytrain[labels_unique[i]==np.array(ltrain)]

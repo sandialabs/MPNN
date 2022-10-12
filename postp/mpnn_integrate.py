@@ -55,7 +55,7 @@ def mpnneval_wrapper(x, mpnn=None,  temp=None):
     xr[:, 4] *= r
     xr[:, 3] *= r
     y = mpnn.eval(xr, temp=temp)
-    return y
+    return y, None
 
 
 # Integrate the MPNN wrapper function

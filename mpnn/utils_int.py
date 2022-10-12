@@ -58,6 +58,30 @@ class Integrator(object):
         super(Integrator, self).__init__()
         return
 
+    def integrate(self, function, domain=None, func_args=None, xdata=None, **kw_args):
+        raise NotImplementedError
+
+    def _save(self, a, b, kk):
+        if kk in a.keys():
+            b[kk] = a[kk].copy()
+        else:
+            pass
+
+
+    def integrate_multiple(self, f_arg_list, **kwargs):
+        integrals = []
+        for i, f_args in enumerate(f_arg_list):
+            function, args = f_args
+            if i>0:
+                self._save(results, args, 'saved')
+                self._save(results, kwargs, 'xdata')
+
+            integral, results = self.integrate(function, func_args=args, **kwargs)
+
+            integrals.append(integral)
+
+        return integrals
+
 
 class IntegratorScipy(Integrator):
     """docstring for IntegratorScipy"""
@@ -66,12 +90,12 @@ class IntegratorScipy(Integrator):
         super(IntegratorScipy, self).__init__()
         return
 
-    def integrate(self, function, domain=None, func_args=None, epsrel=1.e-5):
+    def integrate(self, function, domain=None, func_args=None, epsrel=1.e-5, xdata=None):
         def wrapper(*args):
             func, dim, func_pars = args[-3:]
             func_input = np.array(args[:dim]).reshape(1, dim)
-            return func(func_input, **func_pars)
-
+            return func(func_input, **func_pars)[0]
+        assert(xdata is None)
         assert(domain is not None)
         dim, two = domain.shape
         integral, err, results = nquad(wrapper,
@@ -91,15 +115,16 @@ class IntegratorMCMC(Integrator):
         super(IntegratorMCMC, self).__init__()
         return
 
-    def integrate(self, function, nmc=100, domain=None, func_args=None):
+    def integrate(self, function, nmc=100, domain=None, func_args=None, xdata=None):
         def logfunction(x, **args):
             assert(len(x.shape) == 1)
-            return np.log(function(x.reshape(1, -1), **args))
+            return np.log(function(x.reshape(1, -1), **args)[0])
         assert(domain is not None)
         dim, two = domain.shape
 
-        rv = MCMCRV(dim, logfunction, param_ini=np.ones((dim,)), nmcmc=10 * nmc)
-        xdata = rv.sample(nmc, **func_args)
+        if xdata is None:
+            rv = MCMCRV(dim, logfunction, param_ini=np.ones((dim,)), nmcmc=10 * nmc)
+            xdata = rv.sample(nmc, **func_args)
         ydata = function(xdata, **func_args)
 
         kde_py = kde.gaussian_kde(xdata.T)
@@ -119,16 +144,18 @@ class IntegratorMC(Integrator):
         np.random.seed(seed=seed)
         return
 
-    def integrate(self, function, domain=None, nmc=100, func_args=None):
+    def integrate(self, function, domain=None, nmc=100, func_args=None, xdata=None):
         assert(domain is not None)
         dim, two = domain.shape
-        sc = Domainizer(domain)
-        xdata = sc.inv(np.random.rand(nmc, dim))
-        ydata = function(xdata, **func_args)
+
+        if xdata is None:
+            sc = Domainizer(domain)
+            xdata = sc.inv(np.random.rand(nmc, dim))
+        ydata, saved = function(xdata, **func_args)
 
         volume = np.prod(domain[:, 1] - domain[:, 0])
         integral = volume * np.mean(ydata)
-        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata}
+        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'saved': saved}
         return integral, results
 
 
@@ -141,16 +168,16 @@ class IntegratorWMC(Integrator):
         return
 
     def integrate(self, function, mean=None, cov=None,
-                  nmc=100, func_args=None):
+                  nmc=100, func_args=None, xdata=None):
         assert(mean is not None)
         if cov is None:
             cov = np.eye(mean.shape[0])
 
-        xdata = np.random.multivariate_normal(mean,
+        if xdata is None:
+            xdata = np.random.multivariate_normal(mean,
                                               cov,
                                               size=(nmc, ))
-
-        ydata = function(xdata, **func_args)
+        ydata, saved = function(xdata, **func_args)
 
         gaussian_weight = multivariate_normal.pdf(xdata,
                                                   mean=mean,
@@ -158,7 +185,7 @@ class IntegratorWMC(Integrator):
 
         integral = np.mean(ydata / gaussian_weight)
 
-        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gaussian_weight}
+        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gaussian_weight, 'saved': saved}
         return integral, results
 
 
@@ -171,23 +198,22 @@ class IntegratorGMM(Integrator):
 
     def integrate(self, function,
                   weights=None, means=None, covs=None,
-                  nmc=100, func_args=None):
+                  nmc=100, func_args=None, xdata=None):
         assert(means is not None)
         if weights is None:
-            weights = [function(mean.reshape(1,-1), **func_args)[0] * np.sqrt(np.linalg.det(cov)) for mean, cov in zip(means, covs)]
-
-
+            weights = [function(mean.reshape(1,-1), **func_args)[0][0] * np.sqrt(np.linalg.det(cov)) for mean, cov in zip(means, covs)]
 
         mygmm = GMM(means, covs=covs, weights=weights)
-        xdata = mygmm.sample(nmc)
 
-        ydata = function(xdata, **func_args)
+        if xdata is None:
+            xdata = mygmm.sample(nmc)
+        ydata, saved = function(xdata, **func_args)
 
         gmm_pdf = mygmm.pdf(xdata)
 
         integral = np.mean(ydata / gmm_pdf)
 
-        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf}
+        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf, 'saved': saved}
         return integral, results
 
 
@@ -199,23 +225,26 @@ class IntegratorGMMT(Integrator):
 
         return
 
-    def integrate(self, function, domain,
+    def integrate(self, function, domain=None,
                   weights=None, means=None, covs=None,
-                  nmc=100, func_args=None):
+                  nmc=100, func_args=None, xdata=None):
         assert(means is not None)
         if weights is None:
-            weights = [function(mean.reshape(1,-1), **func_args)[0] * np.sqrt(np.linalg.det(cov)) for mean, cov in zip(means, covs)]
+            weights = [function(mean.reshape(1,-1), **func_args)[0][0] * np.sqrt(np.linalg.det(cov)) for mean, cov in zip(means, covs)]
 
 
 
         mygmm = GMM(means, covs=covs, weights=weights)
-        xdata = mygmm.sample_indomain(nmc, domain)
 
-        ydata = function(xdata, **func_args)
+        if xdata is None:
+            xdata = mygmm.sample_indomain(nmc, domain)
+        ydata, saved = function(xdata, **func_args)
 
         gmm_pdf = mygmm.pdf(xdata)
         volume = mygmm.volume_indomain(domain)
         integral = volume * np.mean(ydata / gmm_pdf)
 
-        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf/volume}
+        results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf/volume, 'saved': saved}
         return integral, results
+
+

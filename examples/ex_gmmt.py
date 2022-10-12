@@ -22,7 +22,7 @@ def expfunc(x, beta=1.0, Vfunc=None, thermo='I0'):
         y *= (beta * Vfunc(x))**2
 
 
-    return y
+    return y, None
 
 ################################################
 
@@ -34,7 +34,7 @@ dim = 3
 # Note that this particular integrand is of form e^(-beta*V) for a given V
 myfunc = expfunc
 beta = 0.1
-func_args = {'beta': beta, 'Vfunc': doublewell, 'thermo': 'I0'}
+func_args = {'beta': beta, 'Vfunc': doublewell, 'thermo': 'I1'}
 domain = np.tile(np.array([-4.0,14.0]), (dim,1))
 # Minima of V are assumed known: list of minima/Hessian pairs
 minima = [(np.zeros(dim), np.eye(dim)), (2.*np.ones(dim), np.eye(dim))]
@@ -43,7 +43,7 @@ minima = [(np.zeros(dim), np.eye(dim)), (2.*np.ones(dim), np.eye(dim))]
 # GMMT Integrator
 # Note that for best results GMMT needs to use minima locations and inverse Hessians as covariance
 intg = IntegratorGMMT()
-int_gmmt, results = intg.integrate(myfunc, domain,
+int_gmmt, results = intg.integrate(myfunc, domain=domain,
                                   func_args=func_args,
                                   means=[m[0] for m in minima],
                                   covs=[np.linalg.inv(m[1])/beta for m in minima],

@@ -7,7 +7,7 @@ Katrín Blöndal, Khachik Sargsyan, David H. Bross, Branko Ruscic, and C. Frankl
 # Load data
 	prep/prep_xytrain.x <caseid>
 	prep/mpnn_load.py <caseid>
-	# where <caseid> = 1 for H PBE-D3(ABC), 2 for H BEEF_vdW, 3 for CO, 4 for CH3OH, 5 for CH3OH_2d
+	# where <caseid> = 1 for H PBE-D3(ABC), 2 for H BEEF_vdW, 3 for CO, 4 for CH3OH, 5 for CH3OH_2d, 6 for CH3
 
 
 # Exploratory data analysis
@@ -16,7 +16,7 @@ Katrín Blöndal, Khachik Sargsyan, David H. Bross, Branko Ruscic, and C. Frankl
 	prep/plot_ydata.py
 
 # Training
-	mpnn/mp_fit.py
+	fit/mp_fit.py
 
 # Postprocess
 	postp/plot_parity.py

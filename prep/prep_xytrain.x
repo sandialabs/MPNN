@@ -14,6 +14,8 @@ elif [[ $CASEID == 4 ]]; then
     ${THISDIR}/prep_CH3OH.x
 elif [[ $CASEID == 5 ]]; then
     ${THISDIR}/prep_CH3OH_2d.x
+elif [[ $CASEID == 6 ]]; then
+    ${THISDIR}/prep_CH3.x
 else
     echo "Case Id unknown. Should be 1 for H pbe-d3(abc), 2 for H beef, 3 for CO, 4 for CH3OH, 5 for CH3OH_2d"
 fi
