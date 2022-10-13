@@ -163,7 +163,7 @@ elif caseid == 5:
     pnames=['x', 'y', 'z']
     # Atop is at 2.173805, 0.316083, 2.701504
 elif caseid == 6:
-    zmin, zmax = 2.37122541, 4.12122541
+    zmin, zmax = 0.87122541, 4.12122541
     delta_x = 2.4678027
     pnames=['x', 'y', 'z', r'$\alpha$', r'$\beta$', r'$\gamma$']
 else:
