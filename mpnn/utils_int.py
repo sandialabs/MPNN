@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import numpy as np
 
 from scipy.stats import multivariate_normal, kde
@@ -76,8 +77,10 @@ class Integrator(object):
                 self._save(results, args, 'saved')
                 self._save(results, kwargs, 'xdata')
 
-            integral, results = self.integrate(function, func_args=args, **kwargs)
-
+                #print(i, np.max(args['saved']), np.max(kwargs['xdata']))
+            kwargs['func_args']=args
+            integral, results = self.integrate(function, **kwargs)
+            #print(i, np.max(results['ydata']), np.min(results['ydata']))
             integrals.append(integral)
 
         return integrals
@@ -230,11 +233,12 @@ class IntegratorGMMT(Integrator):
                   nmc=100, func_args=None, xdata=None):
         assert(means is not None)
         if weights is None:
+            # TODO: this won't work well if wrapped in integrate_multiple()
             weights = [function(mean.reshape(1,-1), **func_args)[0][0] * np.sqrt(np.linalg.det(cov)) for mean, cov in zip(means, covs)]
 
-
-
+        #print(weights)
         mygmm = GMM(means, covs=covs, weights=weights)
+        #print(mygmm.weights)
 
         if xdata is None:
             xdata = mygmm.sample_indomain(nmc, domain)
@@ -243,6 +247,7 @@ class IntegratorGMMT(Integrator):
         gmm_pdf = mygmm.pdf(xdata)
         volume = mygmm.volume_indomain(domain)
         integral = volume * np.mean(ydata / gmm_pdf)
+        #print("AAA ", gmm_pdf)
 
         results = {'err': None, 'neval': nmc, 'xdata': xdata, 'ydata': ydata, 'icw': gmm_pdf/volume, 'saved': saved}
         return integral, results

@@ -29,11 +29,48 @@ def rot_kinetic_factor(TT, um, momIn, ads=None):
     if ads=='CO':
         return np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) *\
                np.sqrt(2.0 * np.pi * momIn * kB * TT * ev_to_j) / (h**2)
+    elif ads=='CH3':
+        return np.sqrt(2.0 * np.pi * momIn[0] * kB * TT * ev_to_j) *\
+               np.sqrt(2.0 * np.pi * momIn[1] * kB * TT * ev_to_j) *\
+               np.sqrt(2.0 * np.pi * momIn[2] * kB * TT * ev_to_j)/ (h**3)
     else:
         print(f"Need to implement rotational kinetic factor for {ads}. Exiting.")
         sys.exit()
 
+##################
+def thermo_integrand(x, beta=1.0, Vfunc=None, thermo='I0', saved=None, r=1.0, mpnn=None):
+    assert(mpnn is not None)
+    xr = x+0.0
+    xr[:,:3] = mpnn.rhombi[mpnn.eval_type].fromCube(x[:, :3])
+    #print(xr)
+    #print(x)
+    xr[:, 4] = np.arccos(xr[:, 4])-np.pi/2.
 
+    for ir in range(3,xr.shape[1]):
+        xr[:, ir] *= r
+
+    if Vfunc == 'saved':
+        #print(thermo, 'Computing from saved')
+        assert(saved is not None)
+        Vfuncx = saved
+    elif Vfunc == 'new':
+        #print(thermo, 'Computing new')
+        Vfuncx = mpnn.eval(xr, temp=None)
+    else:
+        print(f"Vfunc {Vfuncx} is unknown. Should be 'saved' or 'new'. Exiting.")
+        sys.exit()
+
+
+    expon = beta * Vfuncx
+    y = np.exp(-expon)
+
+    if thermo == 'I1':
+        y *= expon
+    elif thermo == 'I2':
+        y *= (expon)**2
+
+
+    return y, Vfuncx
 
 
 def downselect(dists, rad_min, rad_max, yy, ymin):
@@ -184,8 +221,11 @@ class SModel():
     def __call__(self, x):
 
         x_ = x.copy()
-        x_[:, :3] = self.rhomb.toCube(x[:, :3], xyfold=True)
-        mpt_ = self.rhomb.mpts_toCube([self.mpt], xyfold=True)[0]
+        mpt_ = copy.deepcopy(self.mpt)
+
+        if self.rhomb is not None:
+            x_[:, :3] = self.rhomb.toCube(x[:, :3], xyfold=True)
+            mpt_ = self.rhomb.mpts_toCube([self.mpt], xyfold=True)[0]
 
 
         quad = Quadratic(mpt_.center, mpt_.hess)
@@ -210,11 +250,12 @@ class ZModel():
 
 
 class WFcn():
-    def __init__(self, mpts, eps, rhomb=None):
+    def __init__(self, mpts, eps, rhomb=None, krnl='exp'):
         self.mpts = mpts
         self.centers = np.array([mpt.center for mpt in self.mpts])
         self.eps = eps
         self.rhomb = rhomb
+        self.krnl = krnl
 
         return
 
@@ -228,7 +269,14 @@ class WFcn():
             centers_[:, :3] = self.rhomb.toCube(self.centers[:, :3], xyfold=True)
 
         dists = cdist(x_, centers_)
-        scales = np.exp(-dists / self.eps)
+
+        if self.krnl == 'exp':
+            scales = np.exp(-dists / self.eps)
+        elif self.krnl == 'quad':
+            scales = (1.-(dists/self.eps)**2)*(np.abs(dists)<self.eps).astype(int)
+        else:
+            print(f'WFcn kernel {self.krnl} unknown. Exiting.')
+            sys.exit()
         scales /= np.sum(scales, axis=1).reshape(-1, 1)
         return scales
 
@@ -325,7 +373,7 @@ def ifcn(x):
 
     mpts = [pt1, pt2]
     eps = 0.5
-    wfcn = WFcn(mpts, eps)
+    wfcn = WFcn(mpts, eps, krnl='exp')
 
     mm = MultiModel([zm1, zm2], wfcn=wfcn)
 
