@@ -3,6 +3,7 @@
 import sys
 import time
 import torch
+import argparse
 import numpy as np
 
 import pickle as pk
@@ -12,19 +13,21 @@ import pickle as pk
 ####################################################################################
 ####################################################################################
 
-if len(sys.argv) == 1:
-    mpnn_pk_name = 'mpnn.pk'
-elif len(sys.argv) == 2:
-    mpnn_pk_name = sys.argv[1]
-else:
-    print("Please provide at most one argument.")
-    sys.exit()
+usage_str = 'Script to build PC surrogates of multioutput models.'
+parser = argparse.ArgumentParser(description=usage_str)
+parser.add_argument("-m", "--mpnn", dest="mpnn_pk", type=str, default='mpnn.pk',
+                    help="Pk file of trained MPNN")
+parser.add_argument("-x", "--xinput", dest="xinput", type=str, default='xtrain.txt',
+                    help="Input file")
+args = parser.parse_args()
 
-mpnn = pk.load(open(mpnn_pk_name, 'rb'))
+
+
+
+mpnn = pk.load(open(args.mpnn_pk, 'rb'))
 #pk.dump(mpnn, open('mpnn.pk', 'wb'), 2)
 
-
-xsamples = np.loadtxt('xtrain.txt')
+xsamples = np.loadtxt(args.xinput)
 print(f"Evaluating at {xsamples.shape[0]} points")
 
 
@@ -35,5 +38,5 @@ end = time.time()
 print("Time :", end - start)
 
 # Save
-np.savetxt('ytrain_surr.txt', ysamples)
+np.savetxt('mpnn_'+args.xinput, ysamples)
 

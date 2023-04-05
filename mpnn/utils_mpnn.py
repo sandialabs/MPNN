@@ -485,8 +485,8 @@ def plot_integrand_surr(xtrn, ytrn, ytrn_pred, xtst, ytst, ytst_pred, figname=No
         if showtest:
             plt.plot(eytst, eytst_pred, 'ro', markeredgecolor='black',
                      label='Test  N$_{tst}$ = ' + str(nts))
-        plt.gca().set_xlabel(r'$e^{-E/kT}$', fontsize=20)
-        plt.gca().set_ylabel(r'$e^{-E_s/kT}$', fontsize=20)
+        plt.gca().set_xlabel(r'$e^{-V(x)/kT}$', fontsize=20)
+        plt.gca().set_ylabel(r'$e^{-V_s(x)/kT}$', fontsize=20)
         if cic == 1 and showtest:
             plt.gca().legend(fontsize=12)
         plt.gca().set_title('T=' + str(T) + '   Rel. RMSE=' + "{:0.3f}".format(err), fontsize=15)
@@ -503,7 +503,7 @@ def plot_integrand_surr(xtrn, ytrn, ytrn_pred, xtst, ytst, ytst_pred, figname=No
         cic += 1
 
     if not showtest:
-        plt.gcf().suptitle('N$_{trn}$ = ' + str(ntr), x=0.05, y=1.0, color='g', fontsize=15)
+        plt.gcf().suptitle('N$_{trn}$ = ' + str(ntr), x=0.05, y=1.0, color='w', fontsize=15)
 
     plt.gcf().tight_layout(pad=1.5)
     if figname is None:
