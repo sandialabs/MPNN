@@ -19,7 +19,9 @@ ads = 'CH3' # This is only implemented for CO and CH3
 
 ####################################################################################
 
-parser = argparse.ArgumentParser()
+usage_str = 'Script to integrate using MPNN surrogate as an exponent of the weight function.'
+
+parser = argparse.ArgumentParser(description=usage_str)
 
 parser.add_argument("-t", "--temp", dest="TT",
                     type=float, default=1000.0, help="Temperature")

@@ -13,7 +13,7 @@ import pickle as pk
 ####################################################################################
 ####################################################################################
 
-usage_str = 'Script to build PC surrogates of multioutput models.'
+usage_str = 'Script to evaluate MPNN surrogate.'
 parser = argparse.ArgumentParser(description=usage_str)
 parser.add_argument("-m", "--mpnn", dest="mpnn_pk", type=str, default='mpnn.pk',
                     help="Pk file of trained MPNN")
