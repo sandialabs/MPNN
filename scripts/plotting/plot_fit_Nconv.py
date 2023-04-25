@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from klpc.utils.plotting import myrc, lighten_color
+from plot_utils import myrc, lighten_color
 
 myrc()
 
