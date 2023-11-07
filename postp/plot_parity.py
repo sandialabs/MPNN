@@ -14,7 +14,7 @@ myrc()
 ####################################################################################
 ####################################################################################
 
-usage_str = 'Script to build PC surrogates of multioutput models.'
+usage_str = 'Script for parity plots to check the accuracy of MPNN approximation.'
 parser = argparse.ArgumentParser(description=usage_str)
 parser.add_argument("-m", "--mpnn", dest="mpnn_pk", type=str, default='mpnn.pk',
                     help="Pk file of trained MPNN")
@@ -39,7 +39,8 @@ yall_pred = mpnn.eval(xall, eps=0.02)
 
 np.savetxt('mpnn_'+args.youtput, yall_pred)
 
-plot_integrand_surr(xall, yall, yall_pred, xall, yall, yall_pred, showtest=False)
+#plot_integrand_surr(xall, yall, yall_pred, xall, yall, yall_pred, showtest=False)
+plot_integrand_surr(xall, yall, yall_pred, xall, yall, yall_pred, showtest=False, Trange=np.arange(300,901,300))
 
 
 

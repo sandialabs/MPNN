@@ -23,7 +23,7 @@ for NN in 8000 4000 2000 1000 500 250 125; do
 
     # train
     ${MPNN}/fit/mpnn_fit.py
-
+    cp mpnn.pk mpnn_${NN}.pk
     # postprocess
     ${MPNN}/postp/plot_parity.py -m mpnn.pk -x xtest.txt -y ytest.txt > rrmse_test_N${NN}.txt 
 done

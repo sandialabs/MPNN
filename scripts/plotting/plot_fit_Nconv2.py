@@ -23,7 +23,7 @@ def myrc():
 
 nrepl = 40
 NNs = [125, 250, 500, 1000, 2000, 4000, 8000]
-TTs = [400, 600, 800, 1000, 1200, 1400]
+TTs = [300, 600, 900] #[400, 600, 800, 1000, 1200, 1400]
 
 nnum = len(NNs)
 nt = len(TTs)
@@ -34,13 +34,13 @@ nt = len(TTs)
 #         rrmse_all[:, inum, ir, 0] = N
 #         rrmse_all[:, inum, ir, 1] = np.array(TTs)
 #         rrmse_all[:, inum, ir, 2] = ir+1
-#         rrmse_all[:, inum, ir, 3] = np.loadtxt(f'../r{ir+1}/rrmse_test_N{N}.txt')[:, -1]
+#         rrmse_all[:, inum, ir, 3] = np.loadtxt(f'r{ir+1}/rrmse_test_N{N}.txt')[:, -1]
 
-# np.savetxt(f'rrmse_all.txt', rrmse.reshape(-1,4))
+# np.savetxt(f'rrmse_all.txt', rrmse_all.reshape(-1,4))
 # for it, T in enumerate(TTs):
-#     rr = rrmse[it, :, :, :].reshape(-1,4)
+#     rr = rrmse_all[it, :, :, :].reshape(-1,4)
 #     np.savetxt(f'rrmse_T{int(T)}.txt', rr)
-# print(rrmse)
+# print(rrmse_all)
 # sys.exit()
 
 ####################################################################################
@@ -61,9 +61,9 @@ for it, T in enumerate(TTs):
     rrmse_lower = errs_qt[0, :]
     rrmse_upper = errs_qt[2, :]
 
-    if it % 2 == 0: # only plot every other temp
-        plt.plot(NNs, rrmse, 'o-', label='T = '+str(T))
-        #plt.errorbar(NNs, rrmse, yerr=[rrmse-rrmse_lower,rrmse_upper-rrmse],fmt='o-', label='T = '+str(T))
+    #if it % 2 == 0: # only plot every other temp
+    #plt.plot(NNs, rrmse, 'o-', label='T = '+str(T))
+    plt.errorbar(NNs, rrmse, yerr=[rrmse-rrmse_lower,rrmse_upper-rrmse],fmt='o-', label='T = '+str(T))
 
 xticklabels = [int(ns) for ns in NNs]
 plt.xscale('log')

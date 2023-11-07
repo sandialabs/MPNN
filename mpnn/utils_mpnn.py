@@ -458,12 +458,15 @@ class MPNNet(MLPBase):
 
 
 
-def plot_integrand_surr(xtrn, ytrn, ytrn_pred, xtst, ytst, ytst_pred, figname=None, showtest=True):
-    Trange = np.arange(400, 1401, 200)
-    plt.figure(figsize=(16, 10))
+def plot_integrand_surr(xtrn, ytrn, ytrn_pred, xtst, ytst, ytst_pred, figname=None, showtest=True, Trange=None):
+    if Trange is None:
+        Trange = np.arange(400, 1401, 200)
 
-    ir = 2
+
     ic = 3
+    ir = 1+(len(Trange)-1)//ic
+    plt.figure(figsize=(16, 5*ir))
+
     cic = 1
     for T in Trange:
         beta = 1. / (kB * T)
