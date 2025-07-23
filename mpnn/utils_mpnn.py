@@ -166,6 +166,20 @@ class Rhombus():
 
         return mpts_new
 
+    def plotit(self, ax=None):
+        if ax is None:
+            ax = plt.gca()
+        a = self.init[:2]
+        b = a+np.array([self.delta_x/2., self.delta_y])
+        c = b+np.array([self.delta_x, 0.0])
+        d = a+np.array([self.delta_x, 0.0])
+
+        xx = np.array([[p[0], p[1]] for p in [a,b,c,d,a]])
+        ax.plot(xx[:,0],xx[:,1], 'k--')
+        #ax.set_xlabel('x')
+        #ax.set_ylabel('y')
+
+
 def multiply_traindata(xall_cube, yall, kx=0, ky=0):
     npt = yall.shape[0]
     nx = 2*kx+1
@@ -484,10 +498,10 @@ def plot_integrand_surr(xtrn, ytrn, ytrn_pred, xtst, ytst, ytst_pred, figname=No
 
         plt.subplot(ir, ic, cic)
         plt.plot(eytrn, eytrn_pred, 'go', markeredgecolor='black',
-                 label='Train N$_{trn}$ = ' + str(ntr))
+                 label='Train N$_{trn}$ = ' + str(ntr), alpha=0.5)
         if showtest:
             plt.plot(eytst, eytst_pred, 'ro', markeredgecolor='black',
-                     label='Test  N$_{tst}$ = ' + str(nts))
+                     label='Test  N$_{tst}$ = ' + str(nts), alpha=0.2)
         plt.gca().set_xlabel(r'$e^{-V(x)/kT}$', fontsize=20)
         plt.gca().set_ylabel(r'$e^{-V_s(x)/kT}$', fontsize=20)
         if cic == 1 and showtest:

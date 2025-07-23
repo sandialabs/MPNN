@@ -4,10 +4,15 @@ import sys
 import numpy as np
 
 from mpnn.utils_mpnn import  MPoint, Rhombus
-from mpnn.utils_gen import savepk
+from mpnn.utils_gen import savepk, loadpk
+
+# tags = loadpk('tags')
+# print(tags)
+# np.savetxt('tags.txt', np.array(tags, dtype=object), fmt='%s')
+# sys.exit()
 
 caseid = int(sys.argv[1])
-#1 for H pbe-d3(abc), 2 for H beef, 3 for CO, 4 for CH3OH, 5 for CH3OH_3d, 6 for CH3
+#1 for H pbe-d3(abc), 2 for H beef, 3 for CO, 4 for CH3OH, 5 for CH3OH_3d, 6 for CH3, 7 for HXCO, 8 for HXCOt
 
 if caseid == 1:
     # fcc:
@@ -130,8 +135,42 @@ elif caseid == 6:
 
     mpts = [pt1, pt2]
 
+
+elif caseid == 7:
+    center = np.array([1.21863862e+00, 9.45365671e-01, 1.77857035e+01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00])
+    hess =  np.loadtxt('../H_rigid_fcc.dat')
+    yshift = 3.93570490e-02
+    pt1 = MPoint(center, hess, yshift)
+
+
+    center = np.array([2.47409374e+00, 1.25369103e+00, 1.77841116e+01, 4.85671002e-02, 5.98602723e-01, 1.39853043e-01])
+    hess =  np.loadtxt('../H_rigid_hcp.dat')
+
+    yshift = 0.0
+    pt2 = MPoint(center, hess, yshift)
+
+    center = np.array([3.06283153e+00, 1.03581579e+00, 1.80108224e+01, 1.81302028e-01, 9.13705592e-02, 1.08318293e+00])
+
+    hess =  np.loadtxt('../H_rigid_atop.dat')
+
+    yshift = 2.17254328e-02
+    pt3 = MPoint(center, hess, yshift)
+
+    mpts = [pt1, pt2, pt3]
+
+
+elif caseid == 8:
+    center = np.array([1.20863991e-01, -1.50931811e-01, -1.00530753e+00, -8.91946840e+00, 1.51421991e+01])
+    #center = np.array([1.43795995e-01, -1.52019078e-01, -1.00698990e+00, -8.92334909e+00, 1.51413437e+01])
+    hess =  np.loadtxt('../H_s_5x5.dat')
+    yshift = 4.87083889e-05
+    pt1 = MPoint(center, hess, yshift)
+
+
+    mpts = [pt1]
+
 else:
-    print('Case id should be 1 to 6')
+    print('Case id should be 1 to 8')
     sys.exit()
 
 
@@ -166,6 +205,15 @@ elif caseid == 6:
     zmin, zmax = 0.87122541, 4.12122541
     delta_x = 2.4678027
     pnames=['x', 'y', 'z', r'$\alpha$', r'$\beta$', r'$\gamma$']
+elif caseid == 7:
+    zmin, zmax = 17.284111598837722, 20.010822411647094
+    delta_x = 2.5
+    pnames=['x', 'y', 'z', r'$\alpha$', r'$\beta$', r'$\gamma$']
+elif caseid == 8:
+    zmin, zmax = 0.0, 20.0
+    delta_x = 12.5
+    pnames=['s1', 's2', 's3', 's4', 's5']
+
 else:
     print("Case id unknown")
     sys.exit()

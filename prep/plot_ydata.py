@@ -28,7 +28,8 @@ styles = ['mo', \
           ] # this is optimized for the CO-on-Pt(111) case
 styles = ['ro', 'rd', 'rs', \
           'bo', 'bd', 'bs', \
-          'mx', 'gx'
+          'mx', 'gx', 'ro', 'rd', 'rs', \
+          'bo', 'bd', 'bs'
           ] # this is optimized for the CH3-on-Ni(111) case
 
 for i in range(n_groups)[::-1]:

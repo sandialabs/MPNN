@@ -13,6 +13,10 @@ from .utils_mpnn import kB, plot_integrand_surr, downselect, Rhombus, MPNNet, MP
 from .utils_nn import MLP, NNWrap, PeriodicLoss
 from .utils_gen import myrc, tch, cartes_list, rel_l2, random_str, plot_dm, plot_yx
 
+
+from quinn.nns.rnet import RNet, Poly, NonPar
+from quinn.solvers.nn_ens import NN_Ens
+
 class MPNN():
     """docstring for MPNN"""
     def __init__(self, case_glob):
@@ -30,6 +34,9 @@ class MPNN():
         self.mmodel = None # set in eval()
         self.eval_type = None
         self.expon = True # this means e^NN
+
+        self.ptmodels = None # set in fit()
+        self.uqnet = None # set in fit_
 
         self.set_rhombi()
 
@@ -90,7 +97,7 @@ class MPNN():
 
     def fit(self, xall, yall,
             tr_frac=0.9, cl_rad=1.e+10,
-            hls=(111,111, 111), activ='relu',
+            hls=(111,111, 111), activ='relu', wd=0.0,
             lr=0.001, nepochs=2000, bsize=1000, periodic_lambda=0.0,
             eps=0.02, eval_type=-2):
         myrc()
@@ -132,6 +139,7 @@ class MPNN():
             xall_cube = xall.copy()
             xall_cube[:,:3] = self.rhombi[j].toCube(xall[:,:3], xyfold=True)
             mpts_cube = self.rhombi[j].mpts_toCube(self.mpts, xyfold=True)#watch out for toy cases no folding?!
+            #print(xall_cube[:, :3])
 
 
 
@@ -163,7 +171,7 @@ class MPNN():
             ptmodel, ytrn_pred, ytst_pred = fit(xtrn_this, ytrn_this, mpnn_map,
                                                 hls = hls, activ=activ,
                                                 nepochs=nepochs, bsize=bsize,
-                                                lr=1.0, lmbd=lrfcn,
+                                                lr=1.0, lmbd=lrfcn, wd=wd,
                                                 periodic_lambda=periodic_lambda,
                                                 xtst=xtst_this, ytst=ytst_this,
                                                 debug=self.debug)
@@ -201,6 +209,82 @@ class MPNN():
 
         return mpnn_tst_err
 
+
+    def fit_(self, xall, yall, cl_rad=10.0,
+             tr_frac=0.9, hls=(111, 111, 111), activ='relu',
+            lr=0.001, nepochs=2000, bsize=1000, periodic_lambda=0.0,
+            eps=0.02, eval_type=-2):
+
+        myrc()
+        self.eval_type = eval_type
+        self.plot_xdata(xall)
+
+
+        nall, dim = xall.shape
+        assert(yall.shape[0] == nall)
+        assert(dim == self.ndim)
+
+        indperm = np.random.permutation(range(nall))
+        ntrn = int(tr_frac*nall) #7000 #int(sys.argv[1]) #9380
+        ntst = nall - ntrn #int(sys.argv[2]) #nall - ntrn
+
+        indtrn = indperm[:ntrn]
+        indtst = indperm[-ntst:]
+
+
+
+        j = eval_type + 0 # needs to be 0, 1, 2 for now
+        xall_cube = xall.copy()
+        xall_cube[:,:3] = self.rhombi[j].toCube(xall[:,:3], xyfold=True)
+
+
+        xtrn, xtst = xall_cube[indtrn, :], xall_cube[indtst, :]
+        ytrn, ytst = yall[indtrn], yall[indtst]
+
+        print("======================================")
+
+        if self.cushion_data:
+            xtrn, ytrn = multiply_traindata(xtrn, ytrn, kx=2, ky=2)
+
+        nnet = RNet(111, 3, wp_function=NonPar(3),
+            indim=dim, outdim=1,
+            layer_pre=True, layer_post=True,
+            biasorno=True, nonlin=True,
+            mlp=False, final_layer=None)
+
+        self.uqnet = NN_Ens(nnet, nens=1, dfrac=1.0, verbose=True)
+
+        self.uqnet.fit(xtrn, ytrn[:,np.newaxis], val=[xtst, ytst[:,np.newaxis]], lrate=0.01, batch_size=200, nepochs=3000)
+
+        self.uqnet.predict_plot([xtrn, xtst], [ytrn[:,np.newaxis], ytst[:,np.newaxis]], nmc=1, plot_qt=False, labels=['Train', 'Test'])
+
+
+        ytrn_pred = self.uqnet.predict_ens(xtrn)[0]
+        ytst_pred = self.uqnet.predict_ens(xtst)[0]
+
+        print("=========================================")
+        print("MPNN Training error: ", rel_l2(ytrn, ytrn_pred))
+        print("MPNN Testing error: ", rel_l2(ytst, ytst_pred))
+        plot_integrand_surr(xall[indtrn, :], yall[indtrn], ytrn_pred, xall[indtst, :], yall[indtst], ytst_pred)
+
+        # For debugging
+        if self.debug:
+            np.savetxt('ytrn_all', yall[indtrn])
+            np.savetxt('ytrn_pred_all', ytrn_pred)
+            np.savetxt('ytst_all', yall[indtst])
+            np.savetxt('ytst_pred_all', ytst_pred)
+
+
+
+        plot_dm([ytrn, ytst], [ytrn_pred, ytst_pred], errorbars=[], labels=['Training', 'Testing'],
+                    axes_labels=['Model', 'Apprx'], figname='dm.png',
+                    showplot=False, legendpos='in', msize=4)
+        plot_dm([np.log(ytrn), np.log(ytst)], [np.log(ytrn_pred), np.log(ytst_pred)], errorbars=[], labels=['Training', 'Testing'],
+                    axes_labels=['E', 'E_s'], figname='dm_log.png',
+                    showplot=False, legendpos='in', msize=4)
+
+        return
+
     def eval(self, xx, eps=0.02, temp=None, eval_type=None, krnl='exp'):
 
         assert(self.ptmodels is not None)
@@ -228,12 +312,32 @@ class MPNN():
 
         return yy
 
+
+    def eval_(self, xx, eps=0.02, temp=None, eval_type=None):
+        assert(self.uqnet is not None)
+        assert(self.mpts is not None)
+        assert(self.rhombi is not None)
+        if (len(xx.shape) == 1):
+            xx = xx.reshape(1, -1)
+
+        if eval_type is None:
+            eval_type = self.eval_type
+
+        self.set_eval_rhombus(eval_type=eval_type)
+
+
+        yy = self.uqnet.predict_ens(xx)[0]
+        # print(np.min(yy))
+        if temp is not None:
+            yy = np.exp(-yy / (kB * temp))
+
+        return yy
 ##########################################################################################
 ##########################################################################################
 ##########################################################################################
 
 
-def fit(xtrn, ytrn, xymap, hls=(111, 111, 111), activ='relu', nepochs=5000, bsize=None, lr=0.01, lmbd=None, periodic_lambda=0.0, xtst=None, ytst=None, debug=True):
+def fit(xtrn, ytrn, xymap, hls=(111, 111, 111), activ='relu', nepochs=5000, bsize=None, lr=0.01, lmbd=None, wd=0.0, periodic_lambda=0.0, xtst=None, ytst=None, debug=True):
     print(f"Number of training points {ytrn.shape[0]}")
     print(f"Number of testing points {ytst.shape[0]}")
     xtrn_, ytrn_ = xymap.fwd(xtrn, ytrn)
@@ -267,7 +371,7 @@ def fit(xtrn, ytrn, xymap, hls=(111, 111, 111), activ='relu', nepochs=5000, bsiz
     bdry2 = np.vstack((bdry2x, bdry2y))
 
     loss = PeriodicLoss([mpnet, periodic_lambda, tch(bdry1), tch(bdry2)])
-    model = mlp.fit(xtrn_, ytrn_.reshape(-1,1), val=[xtst_, ytst_.reshape(-1,1)],
+    model = mlp.fit(xtrn_, ytrn_.reshape(-1,1), val=[xtst_, ytst_.reshape(-1,1)], wd=wd,
                      lrate=lr, loss=loss, lmbd=lmbd, batch_size=bsize, nepochs=nepochs,
                      gradcheck=False, freq_out=100, freq_plot=100)
 
