@@ -35,7 +35,7 @@ assert(yall.shape[0] == nall)
 
 
 # Evaluate the surrogate
-yall_pred = mpnn.eval(xall, eps=0.02)
+yall_pred = mpnn.eval(xall, eps=0.2)
 
 np.savetxt('mpnn_'+args.youtput, yall_pred)
 

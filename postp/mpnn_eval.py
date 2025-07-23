@@ -33,7 +33,7 @@ print(f"Evaluating at {xsamples.shape[0]} points")
 
 # Evaluate the surrogate
 start = time.time()
-ysamples = mpnn.eval(xsamples, eps=0.002)
+ysamples = mpnn.eval(xsamples, eps=0.2)
 end = time.time()
 print("Time :", end - start)
 
